@@ -1,11 +1,11 @@
 #!/bin/bash
 # Author: Manuel Mehltretter
-# Basic IP Tables Firewall
-# For more information check https://wiki.archlinux.org/title/simple_stateful_firewall
+# iptables-bash
+# Script for configuring iptables firewall with best practice settings.
+# Only perform changes in the specified areas!
+# Based on the following documentation: https://wiki.archlinux.org/title/simple_stateful_firewall
 
-##
-# Initial Setup, DO NOT TOUCH
-##
+### Initial Setup ###
 
 #Flush settings, create chains, set default policies
 iptables -F
@@ -17,7 +17,7 @@ iptables -P FORWARD DROP
 iptables -P OUTPUT ACCEPT
 iptables -P INPUT DROP
 
-#Protect against spoofing Attacks
+# Protect against spoofing attacks
 iptables -t raw -I PREROUTING -m rpfilter --invert -j DROP
 
 # Allow traffic on the loopback interface and allow established connections, drop invalid connections
@@ -37,40 +37,40 @@ iptables -A INPUT -p tcp --syn -m conntrack --ctstate NEW -j TCP
 iptables -A INPUT -p tcp -m recent --set --rsource --name TCP-PORTSCAN -j REJECT --reject-with tcp-reset
 iptables -A INPUT -p udp -m recent --set --rsource --name UDP-PORTSCAN -j REJECT --reject-with icmp-port-unreachable
 
-##
-# TCP Rules, DO NOT TOUCH
-##
+### TCP rules ###
 
-###Protection against SYN scans
+# Protection against SYN scans
 iptables -I TCP -p tcp -m recent --update --rsource --seconds 60 --name TCP-PORTSCAN -j REJECT --reject-with tcp-reset
 
-###Custom TCP Rules below this block 
-#Allow SSH
+### Custom TCP rules - can be altered ###
+
+# Allow SSH
 iptables -A TCP -p tcp --dport 22 -j ACCEPT
-#Allow HTTP
+# Allow HTTP
 iptables -A TCP -p tcp --dport 80 -j ACCEPT
-#Allow HTTPS
+# Allow HTTPS
 iptables -A TCP -p tcp --dport 443 -j ACCEPT
-#Allow LDAPS
+# Allow LDAPS
 iptables -A TCP -p tcp --dport 636 -j ACCEPT
 
-##
-# UDP Rules
-##
+### End of custom TCP rules ###
 
-###Protection against UDP scans
+### UDP Rules ###
+
+# Protection against UDP scans
 iptables -I UDP -p udp -m recent --update --rsource --seconds 60 --name UDP-PORTSCAN -j REJECT --reject-with icmp-port-unreachable
 
-###Custom UDP Rules below this block
+### Custom UDP rules - can be altered ###
 
+# Example rule
+iptables -A UDP -p udp --dport 443 -j ACCEPT
 
+### End of custom UDP rules ###
 
-### Final Rule imitating Linux behavior, DO NOT TOUCH
+# Final rule imitating Linux behavior
 iptables -A INPUT -j REJECT --reject-with icmp-proto-unreachable
 
-##
-# Deny all IPv6, DO NOT TOUCH
-##
+### Deny all IPv6 ###
 ip6tables -P INPUT DROP
 ip6tables -P FORWARD DROP
 ip6tables -P OUTPUT DROP
